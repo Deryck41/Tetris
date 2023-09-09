@@ -1,0 +1,1 @@
+D:/MinGW/bin/g++ -static -o D:/Portfolio/Tetris/dist/Debug/x64/bin/main.exe D:/Portfolio/Tetris/src/main.cpp D:/Portfolio/Tetris/src/Application.cpp -lopengl32 -lgdi32 -lglu32

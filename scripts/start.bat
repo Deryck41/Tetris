@@ -1,0 +1,1 @@
+start ../dist/Debug/x64/bin/main.exe
