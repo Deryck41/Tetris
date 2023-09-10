@@ -6,12 +6,17 @@
 
 class Figure{
 public:
-	Figure(Color color, bool cells[][], Orientation orientation);
+	Figure();
+	Figure(Color color, bool cells[4][4], Orientation orientation, int x, int y);
+	void Rotate(Orientation orientation);
+	Color GetColor();
+	bool GetCell(int row, int col);
 	
 private:
 	Color color;
-	bool cells[][];
+	bool cells[4][4];
+	int x, y;
 	Orientation orientation;
-}
+};
 
-#endif
+#endif //FIGURE_H
