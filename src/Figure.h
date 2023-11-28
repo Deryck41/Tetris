@@ -7,15 +7,19 @@
 class Figure{
 public:
 	Figure();
-	Figure(Color color, bool cells[4][4], Orientation orientation, int x, int y);
-	void Rotate(Orientation orientation);
+	Figure(Color color, bool** cells, Orientation orientation, int x, int y);
+	void Rotate();
 	Color GetColor();
 	bool GetCell(int row, int col);
+	int GetX();
+	int GetY();
+	void ChangeX(float value);
+	void ChangeY(float value);
 	
 private:
 	Color color;
 	bool cells[4][4];
-	int x, y;
+	float x, y;
 	Orientation orientation;
 };
 

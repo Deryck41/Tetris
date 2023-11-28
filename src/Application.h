@@ -2,6 +2,7 @@
 #define Application_H
 
 #include "GameField.h"
+#include "Menu.h"
 
 #include <Windows.h>
 #include <GL/gl.h>
@@ -11,7 +12,7 @@ class Application {
 public:
     Application(HINSTANCE hInstance);
     ~Application();
-
+    void SetTargetFPS(int fps);
     void MainLoop();
 
 private:
@@ -20,13 +21,14 @@ private:
     HDC hdc;
     HGLRC hglrc;
     GameField gameField;
+    int targetFPS;
+    DWORD lastUpdateTime;
 
     bool isRunning;
 
     void InitWindow();
     void InitGame();
-    void HandleInput();
-    void Update();
+    void Update(DWORD deltaTime);
     void Render();
     void Cleanup();
 };

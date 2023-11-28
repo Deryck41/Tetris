@@ -1,10 +1,4 @@
 #include "Application.h"
-#include "GameField.h"
-
-
-#include <Windows.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
 
 #define screenWidth 350
 #define screenHeight 700
@@ -22,40 +16,62 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 	return 0;
 }
 
-Application::Application(HINSTANCE hInstance) : hInstance(hInstance), hwnd(nullptr), hdc(nullptr), hglrc(nullptr), isRunning(true), gameField(10,20) {
-	InitWindow();
+Application::Application(HINSTANCE hInstance) : hInstance(hInstance), hwnd(nullptr), hdc(nullptr), hglrc(nullptr), isRunning(false), gameField(10,20) {
 	InitGame();
+	InitWindow();
 }
 Application::~Application() {
 	Cleanup();
 }
 void Application::MainLoop() {
+	const int targetFrameTime = 1000 / this->targetFPS;
+	this->lastUpdateTime = GetTickCount();
+
 	MSG msg;
-	while (isRunning) {
+	while (true) {
+		const DWORD frameStartTime = GetTickCount();
 		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+			if (isRunning)
+				this->gameField.HandleMessage(msg);
 			if (msg.message == WM_QUIT) {
-				isRunning = false;
+				break;
 			}
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
 
-		HandleInput();
-		Update();
+		const DWORD currentTime = GetTickCount();
+        const DWORD deltaTime = currentTime - this->lastUpdateTime;
+        this->lastUpdateTime = currentTime;
+
+		Update(deltaTime);
 		Render();
+		const DWORD frameEndTime = GetTickCount();
+        const DWORD frameTime = frameEndTime - frameStartTime;
+
+        if (frameTime < targetFrameTime) {
+            const DWORD sleepTime = targetFrameTime - frameTime;
+            Sleep(sleepTime);
+        }
+        if (this->gameField.GetLooseState()){
+        	if(MessageBox(NULL, "You loose!\nTry again?", "Game over", MB_YESNO) == 7){
+        		break;
+        	}
+        	else{
+        		InitGame();
+        	}
+        }
 	}
 }
 
 
 void Application::InitWindow() {
-	// Создание и настройка окна WinAPI
 	WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_OWNDC, WindowProc, 0, 0, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, "Application", nullptr };
 	RegisterClassEx(&wc);
-	hwnd = CreateWindow(wc.lpszClassName, "Application", WS_OVERLAPPEDWINDOW, 300, 200, screenWidth, screenHeight, nullptr, nullptr, wc.hInstance, nullptr);
+	hwnd = CreateWindow(wc.lpszClassName, "Application", WS_OVERLAPPEDWINDOW, 300, 50, screenWidth, screenHeight, nullptr, nullptr, wc.hInstance, nullptr);
 	ShowWindow(hwnd, SW_SHOWNORMAL);
 	SetForegroundWindow(hwnd);
 
-	// Создание и настройка контекста OpenGL
 	PIXELFORMATDESCRIPTOR pfd = {
 		sizeof(PIXELFORMATDESCRIPTOR),
 		1,
@@ -87,9 +103,7 @@ void Application::InitWindow() {
 	glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     
-    // Устанавливаем ортографическую проекцию, чтобы сместить координаты в левый нижний угол поля
     glOrtho(0, 10, 0, 20, -1, 1);
-    //glScalef((float)10 / (float)350, (float)20 / (float)700, 1.0f);
     
     
     glMatrixMode(GL_MODELVIEW);
@@ -101,35 +115,27 @@ void Application::InitWindow() {
 
 void Application::InitGame(){
 	this->gameField = GameField(10,20);
-	// Figure newFigure = gameField.GenerateFigure(Color{1.0f, 0.0f, 0.0f}, Orientation::toLeft);
-	// this->gameField.AddFigure(newFigure);
 	this->gameField.PlaceRandomFigureOnField();
 }
 
-void Application::HandleInput() {
-	MSG msg;
-	while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
+
+void Application::Update(DWORD deltaTime){
+	if (isRunning){
+		float deltaTimeInSeconds = static_cast<float>(deltaTime) / 1000.0f;
+		this->gameField.Update(deltaTime);
 	}
 }
 
-void Application::Update(){
-
+void Application::SetTargetFPS(int fps){
+	this->targetFPS = fps;
 }
 
 void Application::Render() {
+	if (isRunning){
+		this->gameField.DrawFigures();
+		this->gameField.TestDrawField();
+	}
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// glMatrixMode(GL_MODELVIEW);
-    // glLoadIdentity();
-    // float scaleFactorX = static_cast<float>(this->gameField.GetWidth());
-    // float scaleFactorY = static_cast<float>(this->gameField.GetHeight());
-    // glScalef(scaleFactorX, scaleFactorY, 1.0f);
-    // glLoadIdentity();
-
-	this->gameField.DrawFigures();
-	this->gameField.TestDrawField();
 
 	SwapBuffers(hdc);
 }
